@@ -12,26 +12,67 @@ figma.showUI(__html__);
 // Calls to "parent.postMessage" from within the HTML page will trigger this
 // callback. The callback will be passed the "pluginMessage" property of the
 // posted message.
-figma.ui.onmessage =  (msg: {type: string, count: number}) => {
-  // One way of distinguishing between different types of messages sent from
-  // your HTML page is to use an object with a "type" property like this.
-  if (msg.type === 'create-shapes') {
-    // This plugin creates rectangles on the screen.
-    const numberOfRectangles = msg.count;
 
-    const nodes: SceneNode[] = [];
-    for (let i = 0; i < numberOfRectangles; i++) {
-      const rect = figma.createRectangle();
-      rect.x = i * 150;
-      rect.fills = [{ type: 'SOLID', color: { r: 1, g: 0.5, b: 0 } }];
-      figma.currentPage.appendChild(rect);
-      nodes.push(rect);
+const textData: { [key: string]: { text: string; svg: string } } = {};
+
+figma.ui.onmessage = (msg: { type: string; count: number }) => {
+  console.log("Received message from UI:", msg);
+
+  main();
+};
+
+async function traverse(node: SceneNode) {
+  if (!isNodeVisible(node)) return;
+
+  if ("children" in node) {
+    for (const child of node.children) {
+      await traverse(child);
     }
-    figma.currentPage.selection = nodes;
-    figma.viewport.scrollAndZoomIntoView(nodes);
   }
 
-  // Make sure to close the plugin when you're done. Otherwise the plugin will
-  // keep running, which shows the cancel button at the bottom of the screen.
+  if (node.type === "TEXT") {
+    const svgString = await node.exportAsync({ format: "SVG_STRING" });
+
+    // Save both text and SVG to textData
+    textData[node.id] = {
+      text: node.characters,
+      svg: svgString,
+    };
+  }
+}
+
+function isNodeVisible(node: SceneNode): boolean {
+  // Must be visible itself
+  if (!node.visible) return false;
+  // Must have non-zero opacity
+  if ("opacity" in node && node.opacity === 0) return false;
+
+  // Must have render bounds > 0 (not clipped/out of view)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if ((node as any).absoluteRenderBounds == null) return false;
+
+  // All parents up to the page must be visible
+  let parent = node.parent;
+  while (parent && parent.type !== "PAGE") {
+    if ("visible" in parent && !parent.visible) return false;
+    if ("opacity" in parent && parent.opacity === 0) return false;
+    parent = parent.parent;
+  }
+
+  return true;
+}
+
+async function main() {
+  const selection = figma.currentPage.selection;
+  if (selection.length === 0) {
+    figma.notify("Select at least one text layer.");
+    figma.closePlugin();
+    return;
+  }
+  for (const node of selection) {
+    await traverse(node);
+  }
+  console.log("Text + SVG Data:", textData);
+  figma.ui.postMessage({ type: "TEXT_DATA", data: textData });
   figma.closePlugin();
-};
+}
