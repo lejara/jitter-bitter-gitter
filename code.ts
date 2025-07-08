@@ -5,39 +5,59 @@
 // This shows the HTML page in "ui.html".
 figma.showUI(__html__);
 
-const textData: Record<
-  string,
-  {
-    text: string;
-
-    fontSize: number | symbol;
-    fontName: FontName;
-    svg: {
-      data: string;
-      path: string;
-    };
-    styles: Array<{
-      char: string;
-      fontName: FontName;
-      fontSize: number;
-      lineHeight: any;
-      letterSpacing: any;
-    }>;
+figma.ui.onmessage = (msg: { type: string }) => {
+  if ("grab-data" === msg.type) {
+    main();
   }
-> = {};
-
-figma.ui.onmessage = (msg: { type: string; count: number }) => {
-  console.log("Received message from UI:", msg);
-
-  main();
 };
 
-async function traverse(node: SceneNode) {
+async function main() {
+  const selection = figma.currentPage.selection;
+
+  const textData: Record<
+    string,
+    {
+      text: string;
+
+      fontSize: number | symbol;
+      fontName: FontName;
+      svg: {
+        data: string;
+        path: string;
+      };
+      styles: Array<{
+        char: string;
+        fontName: FontName;
+        fontSize: number;
+        lineHeight: any;
+        letterSpacing: any;
+      }>;
+    }
+  > = {};
+
+  if (selection.length === 0) {
+    figma.notify("Select at least one text layer.");
+    figma.closePlugin();
+    return;
+  }
+  for (const node of selection) {
+    await traverse(node, textData);
+  }
+  console.log("DONE!");
+
+  figma.ui.postMessage({
+    type: "TEXT_DATA",
+    data: JSON.stringify(textData, null, 2),
+  });
+  // figma.closePlugin();
+}
+
+async function traverse(node: SceneNode, textData: any) {
   if (!isNodeVisible(node)) return;
 
   if ("children" in node) {
     for (const child of node.children) {
-      await traverse(child);
+      await traverse(child, textData);
     }
   }
 
@@ -94,21 +114,6 @@ function isNodeVisible(node: SceneNode): boolean {
   }
 
   return true;
-}
-
-async function main() {
-  const selection = figma.currentPage.selection;
-  if (selection.length === 0) {
-    figma.notify("Select at least one text layer.");
-    figma.closePlugin();
-    return;
-  }
-  for (const node of selection) {
-    await traverse(node);
-  }
-  console.log("DONE!");
-  figma.ui.postMessage({ type: "TEXT_DATA", data: textData });
-  // figma.closePlugin();
 }
 
 async function loadFonts(textNode: TextNode) {

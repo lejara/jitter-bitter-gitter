@@ -5,19 +5,14 @@
 <script>
   document.getElementById("create").onclick = () => {
     const textbox = document.getElementById("count");
-    const count = parseInt(textbox.value, 10);
-    parent.postMessage(
-      { pluginMessage: { type: "create-shapes", count } },
-      "*"
-    );
+    parent.postMessage({ pluginMessage: { type: "grab-data" } }, "*");
   };
 
   window.onmessage = (event) => {
     const { type, data } = event.data.pluginMessage;
     if (type === "TEXT_DATA") {
       window.textData = data;
-      const jsonStr = JSON.stringify(data, null, 2);
-      downloadJsonFile("textData.json", jsonStr);
+      downloadJsonFile("textData.json", data);
       // console.log("Received text data:", data);
     }
   };
