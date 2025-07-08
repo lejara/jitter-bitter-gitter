@@ -40,5 +40,11 @@
         }
       ]
     }
+  },
+  "dependencies": {
+    "@noble/hashes": "^1.8.0",
+    "@types/imurmurhash": "^0.1.4",
+    "imurmurhash": "^0.1.4",
+    "sha.js": "^2.4.12"
   }
 }

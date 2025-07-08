@@ -1,19 +1,30 @@
-// This plugin will open a window to prompt the user to enter a number, and
-// it will then create that many rectangles on the screen.
-
-// This file holds the main code for plugins. Code in this file has access to
-// the *figma document* via the figma global object.
-// You can access browser APIs in the <script> tag inside "ui.html" which has a
-// full browser environment (See https://www.figma.com/plugin-docs/how-plugins-run).
+/* eslint-disable @typescript-eslint/no-explicit-any */
+//NOTE: to add imports you def should use a bundler
+//Figma plugin UI runs in the browser environment
 
 // This shows the HTML page in "ui.html".
 figma.showUI(__html__);
 
-// Calls to "parent.postMessage" from within the HTML page will trigger this
-// callback. The callback will be passed the "pluginMessage" property of the
-// posted message.
+const textData: Record<
+  string,
+  {
+    text: string;
 
-const textData: { [key: string]: { text: string; svg: string } } = {};
+    fontSize: number | symbol;
+    fontName: FontName;
+    svg: {
+      data: string;
+      path: string;
+    };
+    styles: Array<{
+      char: string;
+      fontName: FontName;
+      fontSize: number;
+      lineHeight: any;
+      letterSpacing: any;
+    }>;
+  }
+> = {};
 
 figma.ui.onmessage = (msg: { type: string; count: number }) => {
   console.log("Received message from UI:", msg);
@@ -32,11 +43,34 @@ async function traverse(node: SceneNode) {
 
   if (node.type === "TEXT") {
     const svgString = await node.exportAsync({ format: "SVG_STRING" });
+    const pathMatch = svgString.match(/<path[^>]*d="([^"]+)"/);
 
-    // Save both text and SVG to textData
+    if (!pathMatch) {
+      console.warn(`No path found in SVG for node ${node.id}. Skipping.`);
+      return;
+    }
+
+    await loadFonts(node);
+    const chars = node.characters;
+    const styles = [];
+    for (let i = 0; i < chars.length; i++) {
+      styles.push({
+        char: chars[i],
+        fontName: node.getRangeFontName(i, i + 1) as FontName,
+        fontSize: node.getRangeFontSize(i, i + 1) as number,
+        lineHeight: node.getRangeLineHeight(i, i + 1),
+        letterSpacing: node.getRangeLetterSpacing(i, i + 1),
+      });
+    }
     textData[node.id] = {
-      text: node.characters,
-      svg: svgString,
+      text: chars,
+      fontSize: node.fontSize,
+      fontName: node.fontName as FontName,
+      styles,
+      svg: {
+        data: svgString,
+        path: pathMatch[1],
+      },
     };
   }
 }
@@ -72,7 +106,18 @@ async function main() {
   for (const node of selection) {
     await traverse(node);
   }
-  console.log("Text + SVG Data:", textData);
+  console.log("DONE!");
   figma.ui.postMessage({ type: "TEXT_DATA", data: textData });
-  figma.closePlugin();
+  // figma.closePlugin();
+}
+
+async function loadFonts(textNode: TextNode) {
+  const fontPromises = new Set<string>();
+  for (let i = 0; i < textNode.characters.length; i++) {
+    const fontName = textNode.getRangeFontName(i, i + 1);
+    fontPromises.add(JSON.stringify(fontName));
+  }
+  for (const fn of fontPromises) {
+    await figma.loadFontAsync(JSON.parse(fn));
+  }
 }
