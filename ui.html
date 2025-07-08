@@ -1,7 +1,7 @@
-<h2>Rectangle Creator</h2>
-<p>Count: <input id="count" type="number" value="5" /></p>
-<button id="create">Create</button>
-<button id="cancel">Cancel</button>
+<h2>Jitter Bitter Grabba</h2>
+<p>For all your grabbing needs (っ˘ڡ˘ς)</p>
+<button id="create">Grab Text Data</button>
+
 <script>
   document.getElementById("create").onclick = () => {
     const textbox = document.getElementById("count");
@@ -10,10 +10,6 @@
       { pluginMessage: { type: "create-shapes", count } },
       "*"
     );
-  };
-
-  document.getElementById("cancel").onclick = () => {
-    parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
   };
 
   window.onmessage = (event) => {
