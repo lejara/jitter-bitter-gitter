@@ -7,6 +7,7 @@ figma.showUI(__html__);
 
 figma.ui.onmessage = (msg: { type: string }) => {
   if ("grab-data" === msg.type) {
+    // listUsedFontsInDocument();
     main();
   }
 };
@@ -71,20 +72,35 @@ async function traverse(node: SceneNode, textData: any) {
     }
 
     await loadFonts(node);
+
+    const isFontSizeMixed = node.fontSize === figma.mixed;
+    const fontSizesSet = new Set();
+
     const chars = node.characters;
     const styles = [];
     for (let i = 0; i < chars.length; i++) {
+      const fontSize = node.getRangeFontSize(i, i + 1) as number;
+      if (fontSize) {
+        fontSizesSet.add(fontSize);
+      }
+
       styles.push({
         char: chars[i],
         fontName: node.getRangeFontName(i, i + 1) as FontName,
-        fontSize: node.getRangeFontSize(i, i + 1) as number,
+        fontSize: fontSize,
         lineHeight: node.getRangeLineHeight(i, i + 1),
         letterSpacing: node.getRangeLetterSpacing(i, i + 1),
       });
     }
     textData[node.id] = {
       text: chars,
-      fontSize: node.fontSize,
+      flags: {
+        mixedFontSize: isFontSizeMixed,
+        mixedStyles: node.fontName === figma.mixed,
+      },
+      fontSize: isFontSizeMixed
+        ? fontSizesSet.values().next().value
+        : node.fontSize,
       fontName: node.fontName as FontName,
       styles,
       svg: {
@@ -114,6 +130,23 @@ function isNodeVisible(node: SceneNode): boolean {
   }
 
   return true;
+}
+
+async function listUsedFontsInDocument() {
+  // find every Text node on the current page
+  const textNodes = figma.currentPage.findAll(
+    (node) => node.type === "TEXT"
+  ) as TextNode[];
+
+  // collect unique font signatures
+  const used = new Set<string>();
+  for (const tn of textNodes) {
+    // tn.fontName may be FontName or { family: "Mixed", style: "" } if mixed
+    const font = tn.fontName as FontName;
+    used.add(`${font.family} — ${font.style}`);
+  }
+
+  console.log("Fonts used in this page:", Array.from(used));
 }
 
 async function loadFonts(textNode: TextNode) {
