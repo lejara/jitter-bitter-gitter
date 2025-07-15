@@ -264,10 +264,11 @@ function getTranslatedText(
 function normalizeString(str: string): string {
   return str
     .trim() // remove leading/trailing
-    .toLowerCase() // unify case
-    .normalize("NFD") // split accented chars
+    .normalize("NFD") // decompose accents
     .replace(/[\u0300-\u036f]/g, "") // strip diacritic marks
-    .replace(/\s+/g, " "); // collapse spaces/newlines/tabs
+    .replace(/\u2122/g, "tm") // map trademark symbol to letters
+    .toLowerCase() // unify case
+    .replace(/\s+/g, " "); // collapse any whitespace
 }
 
 const locals = {
