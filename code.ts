@@ -3,7 +3,7 @@
 //Figma plugin UI runs in the browser environment
 
 // This shows the HTML page in "ui.html".
-figma.showUI(__html__);
+figma.showUI(__html__, { width: 400, height: 300 });
 
 figma.ui.onmessage = (msg: {
   type: string;
@@ -175,7 +175,7 @@ async function loadFonts(textNode: TextNode) {
 }
 
 // #region TranslateText Code
-
+//TODO: CardioMEMS™ Reading does not match
 async function translateTextFields(targetLang: number, targetSheet: string) {
   // console.log("test");
   // console.log(targetLang);

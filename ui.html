@@ -10,52 +10,54 @@
     <div>
       <button id="create">Grab Text Data</button>
     </div>
-
-    <button id="translate-btn">Translate Selection</button>
-
-    <label for="lang-select">Target Language:</label>
-    <select id="lang-select">
-      <option value="0">English (US)</option>
-      <option value="1">English (UK)</option>
-      <option value="2">Arabic</option>
-      <option value="3">Czech</option>
-      <option value="4">Danish</option>
-      <option value="5">Dutch</option>
-      <option value="6">Finnish</option>
-      <option value="7">French</option>
-      <option value="8">German</option>
-      <option value="9">Greek</option>
-      <option value="10">Italian</option>
-      <option value="11">Norwegian</option>
-      <option value="12">Portuguese</option>
-      <option value="13">Russian</option>
-      <option value="14">Spanish (Spain)</option>
-      <option value="15">Spanish (Latin American)</option>
-      <option value="16">Swedish</option>
-      <option value="17">Japanese</option>
-      <option value="18">Hebrew</option>
-      <option value="19">Slovak</option>
-      <option value="20">Slovenian</option>
-      <option value="21">Polish</option>
-    </select>
-
-    <label for="screenSelection">Sheet</label>
-    <select name="screenSelection" id="screenSelection">
-      <option value="1-homescreen">1-homescreen</option>
-      <option value="2-readings">2-readings</option>
-      <option value="3-medications">3-medications</option>
-      <option value="4a-nav-mainmenu">4a-nav-mainmenu</option>
-      <option value="4b-nav-changeprofile">4b-nav-changeprofile</option>
-      <option value="4c-nav-changepassword">4c-nav-changepassword</option>
-      <option value="4d-nav-changesettings">4d-nav-changesettings</option>
-      <option value="5-medicationreconciliation">
-        5-medicationreconciliation
-      </option>
-      <option value="6a-journal-weight">6a-journal-weight</option>
-      <option value="6b-journal-fluid">6b-journal-fluid</option>
-      <option value="6c-journal-symptoms">6c-journal-symptoms</option>
-      <option value="7-registration">7-registration</option>
-    </select>
+    <div style="margin-top: 2em">
+      <button id="translate-btn">Translate Selection</button>
+      <div>
+        <label for="lang-select">Language:</label>
+        <select id="lang-select">
+          <option value="0">English (US)</option>
+          <option value="1">English (UK)</option>
+          <option value="2">Arabic</option>
+          <option value="3">Czech</option>
+          <option value="4">Danish</option>
+          <option value="5">Dutch</option>
+          <option value="6">Finnish</option>
+          <option value="7">French</option>
+          <option value="8">German</option>
+          <option value="9">Greek</option>
+          <option value="10">Italian</option>
+          <option value="11">Norwegian</option>
+          <option value="12">Portuguese</option>
+          <option value="13">Russian</option>
+          <option value="14">Spanish (Spain)</option>
+          <option value="15">Spanish (Latin American)</option>
+          <option value="16">Swedish</option>
+          <option value="17">Japanese</option>
+          <option value="18">Hebrew</option>
+          <option value="19">Slovak</option>
+          <option value="20">Slovenian</option>
+          <option value="21">Polish</option>
+        </select>
+        <br />
+        <label for="screenSelection">Sheet</label>
+        <select name="screenSelection" id="screenSelection">
+          <option value="1-homescreen">1-homescreen</option>
+          <option value="2-readings">2-readings</option>
+          <option value="3-medications">3-medications</option>
+          <option value="4a-nav-mainmenu">4a-nav-mainmenu</option>
+          <option value="4b-nav-changeprofile">4b-nav-changeprofile</option>
+          <option value="4c-nav-changepassword">4c-nav-changepassword</option>
+          <option value="4d-nav-changesettings">4d-nav-changesettings</option>
+          <option value="5-medicationreconciliation">
+            5-medicationreconciliation
+          </option>
+          <option value="6a-journal-weight">6a-journal-weight</option>
+          <option value="6b-journal-fluid">6b-journal-fluid</option>
+          <option value="6c-journal-symptoms">6c-journal-symptoms</option>
+          <option value="7-registration">7-registration</option>
+        </select>
+      </div>
+    </div>
 
     <script>
       document.getElementById("create").onclick = () => {
