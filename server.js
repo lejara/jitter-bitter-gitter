@@ -20,7 +20,7 @@ app.post("/api/chat", async (req, res) => {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "o3",
+        model: "gpt-4.1-mini",
         messages,
       }),
     });
