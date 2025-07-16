@@ -9,12 +9,13 @@ figma.ui.onmessage = (msg: {
   type: string;
   targetLang: number;
   targetSheet: string;
+  useAI: boolean;
 }) => {
   if ("grab-data" === msg.type) {
     // listUsedFontsInDocument();
     main();
   } else if ("translateSelection" === msg.type) {
-    translateTextFields(msg.targetLang, msg.targetSheet);
+    translateTextFields(msg.targetLang, msg.targetSheet, msg.useAI);
   }
 };
 
@@ -175,7 +176,11 @@ async function loadFonts(textNode: TextNode) {
 }
 
 // #region TranslateText Code
-async function translateTextFields(targetLang: number, targetSheet: string) {
+async function translateTextFields(
+  targetLang: number,
+  targetSheet: string,
+  useAI: boolean
+) {
   figma.ui.postMessage({
     type: "translate-status",
     data: "Working...",
@@ -191,7 +196,7 @@ async function translateTextFields(targetLang: number, targetSheet: string) {
     return;
   }
   for (const node of selection) {
-    await traverseForTranslation(node, locals[targetSheet], targetLang);
+    await traverseForTranslation(node, locals[targetSheet], targetLang, useAI);
   }
   figma.ui.postMessage({
     type: "translate-status",
@@ -202,13 +207,14 @@ async function translateTextFields(targetLang: number, targetSheet: string) {
 async function traverseForTranslation(
   node: SceneNode,
   sheet: Array<Array<string>>,
-  targetLang: number
+  targetLang: number,
+  useAi: boolean
 ) {
   if (!isNodeVisible(node)) return;
 
   if ("children" in node) {
     for (const child of node.children) {
-      await traverseForTranslation(child, sheet, targetLang);
+      await traverseForTranslation(child, sheet, targetLang, useAi);
     }
   }
 
@@ -217,15 +223,74 @@ async function traverseForTranslation(
 
     await loadFonts(node);
 
-    const newText = await getTranslatedTextWithAI(
-      `${textNode.characters}`,
-      sheet,
-      targetLang
-    );
-    if (newText) {
-      textNode.characters = newText;
+    if (useAi) {
+      let newText = await getTranslatedTextWithAI(
+        `${textNode.characters}`,
+        sheet,
+        targetLang
+      );
+      if (newText) {
+        const result = await wrapBoldAsMarkdown(textNode);
+        if (result.hasBold) {
+          newText = await findWordStylingWithAI(result.text, newText);
+        }
+        if (newText) {
+          textNode.characters = newText;
+        }
+      }
+    } else {
+      const newText = getTranslatedText(
+        `${textNode.characters}`,
+        sheet,
+        targetLang
+      );
+      if (newText) {
+        textNode.characters = newText;
+      }
     }
   }
+}
+
+async function wrapBoldAsMarkdown(textNode: TextNode) {
+  // make sure all fonts used in this node are available
+  await loadFonts(textNode);
+
+  const chars = textNode.characters;
+  let out = "";
+  let i = 0;
+  let hasBold = false;
+
+  while (i < chars.length) {
+    // grab the font of the current character
+    const currentFont = textNode.getRangeFontName(i, i + 1) as FontName;
+    let j = i + 1;
+
+    // extend j while the font remains identical
+    while (j < chars.length) {
+      const nextFont = textNode.getRangeFontName(j, j + 1) as FontName;
+      if (
+        nextFont.family !== currentFont.family ||
+        nextFont.style !== currentFont.style
+      )
+        break;
+      j++;
+    }
+
+    // extract that run
+    const segment = chars.slice(i, j);
+
+    // if style includes “bold” (e.g. “Bold”, “Bold Italic”), wrap it
+    if (currentFont.style.toLowerCase().includes("bold")) {
+      out += `**${segment}**`;
+      hasBold = true;
+    } else {
+      out += segment;
+    }
+
+    i = j;
+  }
+
+  return { hasBold, text: out };
 }
 
 function getTranslatedText(
@@ -250,7 +315,44 @@ function getTranslatedText(
 
   return `${sheet[rowIndex][targetLang]}`;
 }
-//TODO: support bolding. buy asking the ai then you code the bold
+//TODO: do multi awaits
+async function findWordStylingWithAI(
+  translatedText: string,
+  markdownText: string
+) {
+  const messages = [
+    {
+      role: "system",
+      content: "You are a expert translator",
+    },
+    {
+      role: "user",
+      content: `
+Remember the following markdown text in English.
+-----
+      ${markdownText}
+-----
+Now can you help me select words that match the markdown words. Add in the markdown characters between them.
+Only respond with your final result and or repeat the word if you did not find anything
+
+The translated text is :
+      ${translatedText}
+`,
+    },
+  ];
+  const res = await fetch("http://localhost:3000/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages }),
+  });
+  const data = await res.json();
+  console.log(data);
+
+  const result = data.choices[0].message.content;
+
+  return result;
+}
+
 async function getTranslatedTextWithAI(
   text: string,
   sheet: Array<Array<string>>,
