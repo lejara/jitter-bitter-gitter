@@ -317,19 +317,20 @@ The Input is:
 
 /**
  * Fully normalize for fuzzy comparison:
- * - trim
- * - lowercase
- * - decompose & strip diacritics
- * - collapse all whitespace (including newlines) to single spaces
  */
 function normalizeString(str: string): string {
-  return str
-    .trim() // remove leading/trailing
-    .normalize("NFD") // decompose accents
-    .replace(/[\u0300-\u036f]/g, "") // strip diacritic marks
-    .replace(/\u2122/g, "tm") // map trademark symbol to letters
-    .toLowerCase() // unify case
-    .replace(/\s+/g, " "); // collapse any whitespace
+  return (
+    str
+      .trim() // remove leading/trailing
+      .normalize("NFD") // decompose accents
+      .replace(/[\u0300-\u036f]/g, "") // strip diacritic marks
+      .replace(/tm/gi, "") // remove any TM/tm
+      .replace(/\u2122/g, "") // remove ™
+      // normalize apostrophes/quote‐marks to ASCII apostrophe
+      .replace(/[\u2018\u2019\u201A\u201B\u02BC\uFF07]/g, "'")
+      .toLowerCase() // unify case
+      .replace(/\s+/g, " ")
+  ); // collapse any whitespace
 }
 
 const locals = {
