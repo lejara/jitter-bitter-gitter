@@ -18,21 +18,6 @@ figma.ui.onmessage = (msg: {
   }
 };
 
-// async function chatWithGPT(prompt: string) {
-//   const messages = [
-//     { role: "system", content: "You are helpful." },
-//     { role: "user", content: prompt },
-//   ];
-//   const res = await fetch("http://localhost:3000/api/chat", {
-//     method: "POST",
-//     headers: { "Content-Type": "application/json" },
-//     body: JSON.stringify({ messages }),
-//   });
-//   const data = await res.json();
-//   console.log(data);
-//   return data.choices[0].message.content;
-// }
-
 async function main() {
   const selection = figma.currentPage.selection;
 
@@ -190,22 +175,28 @@ async function loadFonts(textNode: TextNode) {
 }
 
 // #region TranslateText Code
-//TODO: CardioMEMS™ Reading does not match
 async function translateTextFields(targetLang: number, targetSheet: string) {
-  // console.log("test");
-  // console.log(targetLang);
-  // console.log(targetSheet);
+  figma.ui.postMessage({
+    type: "translate-status",
+    data: "Working...",
+  });
   const selection = figma.currentPage.selection;
 
   if (selection.length === 0) {
     figma.notify("Select at least one text layer.");
-    figma.closePlugin();
+    figma.ui.postMessage({
+      type: "translate-status",
+      data: "Select a layer :(",
+    });
     return;
   }
   for (const node of selection) {
     await traverseForTranslation(node, locals[targetSheet], targetLang);
   }
-  console.log("DONE!");
+  figma.ui.postMessage({
+    type: "translate-status",
+    data: "Done. (´• ڡ •`)੭旦",
+  });
 }
 
 async function traverseForTranslation(

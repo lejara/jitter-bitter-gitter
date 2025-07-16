@@ -11,7 +11,6 @@
       <button id="create">Grab Text Data</button>
     </div>
     <div style="margin-top: 2em">
-      <button id="translate-btn">Translate Selection</button>
       <div>
         <label for="lang-select">Language:</label>
         <select id="lang-select">
@@ -57,11 +56,14 @@
           <option value="7-registration">7-registration</option>
         </select>
       </div>
+      <button style="margin-top: 2em" id="translate-btn">
+        Translate Selection
+      </button>
+      <p id="status-translate"></p>
     </div>
 
     <script>
       document.getElementById("create").onclick = () => {
-        const textbox = document.getElementById("count");
         parent.postMessage({ pluginMessage: { type: "grab-data" } }, "*");
       };
 
@@ -71,6 +73,9 @@
           window.textData = data;
           downloadJsonFile("textData.json", data);
           // console.log("Received text data:", data);
+        } else if (type === "translate-status") {
+          const statusBox = document.getElementById("status-translate");
+          statusBox.innerHTML = data;
         }
       };
 
