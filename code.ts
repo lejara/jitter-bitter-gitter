@@ -217,7 +217,7 @@ async function traverseForTranslation(
 
     await loadFonts(node);
 
-    const newText = await getTranslatedText(
+    const newText = await getTranslatedTextWithAI(
       `${textNode.characters}`,
       sheet,
       targetLang
@@ -250,7 +250,7 @@ function getTranslatedText(
 
   return `${sheet[rowIndex][targetLang]}`;
 }
-
+//TODO: support bolding. buy asking the ai then you code the bold
 async function getTranslatedTextWithAI(
   text: string,
   sheet: Array<Array<string>>,
@@ -261,40 +261,28 @@ async function getTranslatedTextWithAI(
 
   if (result == null) {
     const possibleWords = sheet.map((row) => row[targetLang]);
-    const quotedString = possibleWords.map((w) => `"${w}"`).join(", ");
-
+    // const quotedString = possibleWords.map((w) => `"${w}"`).join(", ");
+    const quotedString = possibleWords.join(" ");
+    console.log(quotedString);
     const messages = [
       {
         role: "system",
-        content: "You are a multilingual string-matching assistant.",
+        content: "You are a expert translator",
       },
       {
         role: "user",
         content: `
-I will give you:
-- A “target” word in Language A (e.g. English)
-- A list of “strings” in Language B (e.g. Spanish)
+Remember the following source English.
+-----
+      ${text}
+-----
+Now can you help me select the following translated texts. 
+1. Select a translated text you think best match the source. 
+2. Change the text you selected to prefectly translate it to what the source text says
+2. Only repsond with your final result and say null if you did not find one.
 
-Please do the following:
-1. Translate the target word into Language B.
-2. For each string:
-   - Split it into tokens.
-   - Identify any token that is a morphological or localized variant of the translation (inflections, diminutives, plurals, etc.).
-3. If exactly one string contains at least one matching token:
-   - Remove every word in that string that is NOT one of those matching tokens.
-   - Return only the remaining token(s) as a plain string.
-4. If more than one string contains matching token(s):
-   - Prefer any string where the token appears in its canonical (root) form.
-   - If that yields a single winner, strip and return its token(s) as a plain string.
-   - Otherwise, return exactly: "null"
-
-5. If no strings match at all, return exactly: "null" 
-6. **Do not return anything else**—only the matched word(s) or "null".
-
-The Input is:
-    Target: ${text}
-    Source Language: English
-    Strings: ${quotedString}
+The translated texts are :
+      ${quotedString};
 `,
       },
     ];
