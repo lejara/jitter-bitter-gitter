@@ -232,7 +232,7 @@ async function traverseForTranslation(
       if (newText) {
         const result = await wrapBoldAsMarkdown(textNode);
         if (result.hasBold) {
-          newText = await findWordStylingWithAI(result.text, newText);
+          newText = await findWordStylingWithAI(newText, result.text);
         }
         if (newText) {
           textNode.characters = newText;
@@ -333,7 +333,8 @@ Remember the following markdown text in English.
       ${markdownText}
 -----
 Now can you help me select words that match the markdown words. Add in the markdown characters between them.
-Only respond with your final result and or repeat the word if you did not find anything
+- Only respond with your final result of the translated text 
+- Repeat the word if you did not find anything
 
 The translated text is :
       ${translatedText}
