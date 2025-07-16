@@ -18,6 +18,21 @@ figma.ui.onmessage = (msg: {
   }
 };
 
+// async function chatWithGPT(prompt: string) {
+//   const messages = [
+//     { role: "system", content: "You are helpful." },
+//     { role: "user", content: prompt },
+//   ];
+//   const res = await fetch("http://localhost:3000/api/chat", {
+//     method: "POST",
+//     headers: { "Content-Type": "application/json" },
+//     body: JSON.stringify({ messages }),
+//   });
+//   const data = await res.json();
+//   console.log(data);
+//   return data.choices[0].message.content;
+// }
+
 async function main() {
   const selection = figma.currentPage.selection;
 
@@ -211,7 +226,11 @@ async function traverseForTranslation(
 
     await loadFonts(node);
 
-    const newText = getTranslatedText(textNode.characters, sheet, targetLang);
+    const newText = await getTranslatedText(
+      `${textNode.characters}`,
+      sheet,
+      targetLang
+    );
     if (newText) {
       textNode.characters = newText;
     }
@@ -223,25 +242,12 @@ function getTranslatedText(
   sheet: Array<Array<string>>,
   targetLang: number
 ) {
-  //Find where the existing text lives
-  // let colIndex = null;
-  // sheet.forEach((array) => {
-  //   array.forEach((data, index) => {
-  //     if (
-  //       normalizeString(text.toString()) === normalizeString(data.toString())
-  //     ) {
-  //       colIndex = index;
-  //     }
-  //   });
-  // });
   //Find if theres a translation for the text
   let rowIndex = null;
   sheet.forEach((array, index) => {
-    const str = array[0]; // target English (US)
+    const str: string = `${array[0]}`; // target English (US)
     if (str != null) {
-      if (
-        normalizeString(str.toString()) === normalizeString(text.toString())
-      ) {
+      if (normalizeString(str) === normalizeString(`${text}`)) {
         rowIndex = index;
       }
     }
@@ -251,7 +257,71 @@ function getTranslatedText(
     return null;
   }
 
-  return sheet[rowIndex][targetLang];
+  return `${sheet[rowIndex][targetLang]}`;
+}
+
+async function getTranslatedTextWithAI(
+  text: string,
+  sheet: Array<Array<string>>,
+  targetLang: number
+) {
+  //Get it normally first
+  let result = getTranslatedText(text, sheet, targetLang);
+
+  if (result == null) {
+    const possibleWords = sheet.map((row) => row[targetLang]);
+    const quotedString = possibleWords.map((w) => `"${w}"`).join(", ");
+
+    const messages = [
+      {
+        role: "system",
+        content: "You are a multilingual string-matching assistant.",
+      },
+      {
+        role: "user",
+        content: `
+I will give you:
+- A “target” word in Language A (e.g. English)
+- A list of “strings” in Language B (e.g. Spanish)
+
+Please do the following:
+1. Translate the target word into Language B.
+2. For each string:
+   - Split it into tokens.
+   - Identify any token that is a morphological or localized variant of the translation (inflections, diminutives, plurals, etc.).
+3. If exactly one string contains at least one matching token:
+   - Remove every word in that string that is NOT one of those matching tokens.
+   - Return only the remaining token(s) as a plain string.
+4. If more than one string contains matching token(s):
+   - Prefer any string where the token appears in its canonical (root) form.
+   - If that yields a single winner, strip and return its token(s) as a plain string.
+   - Otherwise, return exactly: "null"
+
+5. If no strings match at all, return exactly: "null" 
+6. **Do not return anything else**—only the matched word(s) or "null".
+
+The Input is:
+    Target: ${text}
+    Source Language: English
+    Strings: ${quotedString}
+`,
+      },
+    ];
+    const res = await fetch("http://localhost:3000/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages }),
+    });
+    const data = await res.json();
+    console.log(data);
+
+    result = data.choices[0].message.content;
+    if (result === "null") {
+      result = null;
+    }
+  }
+
+  return result;
 }
 
 /**

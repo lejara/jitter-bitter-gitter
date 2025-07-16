@@ -7,6 +7,7 @@
     "build": "tsc -p tsconfig.json",
     "lint": "eslint --ext .ts,.tsx --ignore-pattern node_modules .",
     "lint:fix": "eslint --ext .ts,.tsx --ignore-pattern node_modules --fix .",
+    "server": "node server.js",
     "watch": "npm run build -- --watch"
   },
   "author": "",
@@ -44,7 +45,11 @@
   "dependencies": {
     "@noble/hashes": "^1.8.0",
     "@types/imurmurhash": "^0.1.4",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
     "imurmurhash": "^0.1.4",
+    "node-fetch": "^3.3.2",
     "sha.js": "^2.4.12",
     "xlsx": "^0.18.5"
   }
