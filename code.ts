@@ -235,7 +235,7 @@ async function traverseForTranslation(
           newText = await findWordStylingWithAI(newText, result.text);
         }
         if (newText) {
-          textNode.characters = newText;
+          setText(node, newText);
         }
       }
     } else {
@@ -245,10 +245,20 @@ async function traverseForTranslation(
         targetLang
       );
       if (newText) {
-        textNode.characters = newText;
+        setText(node, newText);
       }
     }
   }
+}
+
+function setText(textNode: TextNode, newText: string) {
+  const oldText = textNode.characters;
+  //Custom edge cases
+  if (normalizeString(oldText).includes(normalizeString("CARDIOMEMS"))) {
+    newText = newText.replace(/TM/g, "™\u200E");
+  }
+
+  textNode.characters = newText;
 }
 
 async function wrapBoldAsMarkdown(textNode: TextNode) {
@@ -315,7 +325,7 @@ function getTranslatedText(
 
   return `${sheet[rowIndex][targetLang]}`;
 }
-//TODO: do multi awaits
+
 async function findWordStylingWithAI(
   translatedText: string,
   markdownText: string
