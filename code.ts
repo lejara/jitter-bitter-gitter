@@ -332,9 +332,9 @@ Remember the following markdown text in English.
 -----
       ${markdownText}
 -----
-Now can you help me select words that match the markdown words. Add in the markdown characters between them.
-- Only respond with your final result of the translated text 
-- Repeat the word if you did not find anything
+Now can you help me select words in the translated that match the markdown words. When you find a segment of words, add in the corresponding markdown characters between them.
+- Only respond with the final result of the translated text with the markdown characters you added.
+- Repeat the translated text if you did not find anything
 
 The translated text is :
       ${translatedText}
@@ -370,25 +370,30 @@ async function getTranslatedTextWithAI(
     const messages = [
       {
         role: "system",
-        content: "You are a expert translator",
+        content:
+          "You are a expert translator. You have no memory of any previous messages.",
       },
       {
         role: "user",
         content: `
-Remember the following source English.
+The following text is the source text, remember it. 
 -----
       ${text}
 -----
-Now can you help me select the following translated texts. 
-1. Select a translated text you think best match the source. 
-2. Change the text you selected to prefectly translate it to what the source text says
-2. Only repsond with your final result and say null if you did not find one.
+Now can you help me find the segment that matches the source text. I only want the segment.
+I will provide translated texts for you match aganist.
+
+1. Adjust your selection to be matched perfectly to the source text. 
+2. I want a close to 1 to 1 match. You must make a match.
+3. Only respond with your selection.
+4. Run a self check list and make sure you followed the steps perfectly.
 
 The translated texts are :
-      ${quotedString};
+      ${quotedString}
 `,
       },
     ];
+    console.log(messages);
     const res = await fetch("http://localhost:3000/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
