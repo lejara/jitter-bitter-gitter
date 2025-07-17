@@ -366,7 +366,7 @@ async function getTranslatedTextWithAI(
     const possibleWords = sheet.map((row) => row[targetLang]);
     // const quotedString = possibleWords.map((w) => `"${w}"`).join(", ");
     const quotedString = possibleWords.join(" ");
-    console.log(quotedString);
+
     const messages = [
       {
         role: "system",
