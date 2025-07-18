@@ -313,6 +313,7 @@ function getTranslatedText(
   sheet.forEach((array, index) => {
     const str: string = `${array[0]}`; // target English (US)
     if (str != null) {
+      // console.log(normalizeString(str), normalizeString(`${text}`));
       if (normalizeString(str) === normalizeString(`${text}`)) {
         rowIndex = index;
       }
@@ -429,6 +430,7 @@ function normalizeString(str: string): string {
     str
       .trim() // remove leading/trailing
       .normalize("NFD") // decompose accents
+      .replace(/[\r\n]+/g, " ") // remove line-breaks
       .replace(/[\u0300-\u036f]/g, "") // strip diacritic marks
       .replace(/tm/gi, "") // remove any TM/tm
       .replace(/\u2122/g, "") // remove ™
@@ -6304,7 +6306,7 @@ const locals = {
       "Wybieraj ikony menu stopki, aby przechodzić do różnych ekranów aplikacji.",
     ],
     [
-      "Select Home icon to: access home screen ",
+      "select home icon to: access the home screen",
       null,
       "اختر أيقونة الشاشة الرئيسية للقيام بما يأتي: الوصول إلى الشاشة الرئيسية ",
       "Výběrem ikony Domů můžete: přejít na domovskou obrazovku ",
